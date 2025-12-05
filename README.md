@@ -240,3 +240,104 @@ This guide explains how to deploy your application to **Amazon EC2** using:
 
 ```bash
 ssh -i keypair.pem ec2-user@<ec2-public-ip>
+Here’s the **exact fix** for your Jenkins error:
+
+```
+ERROR: dockerhub-creds
+Finished: FAILURE
+```
+
+This means your Jenkins Pipeline tried to use **dockerhub-creds** but **that credential does NOT exist** in Jenkins.
+
+---
+
+# ✅ **Fix the Error: Create Jenkins Credential**
+
+Follow these steps:
+
+---
+
+## **1️⃣ Go to Jenkins → Manage Jenkins**
+
+* Open Jenkins
+* Click **Manage Jenkins**
+
+---
+
+## **2️⃣ Open “Credentials”**
+
+* Click **Manage Credentials**
+* Choose:
+  👉 `Store: Jenkins`
+  👉 `Domain: Global`
+
+---
+
+## **3️⃣ Create New Credential**
+
+Click **Add Credentials**
+
+Select:
+
+### **Kind:** Username with password
+
+### **ID:** `dockerhub-creds` ← (must be EXACTLY this)
+
+### **Username:** Your Docker Hub username
+
+### **Password:** Your Docker Hub password
+
+### **Description:** Dockerhub login
+
+→ Click **Create**
+
+---
+
+# ✅ **4️⃣ Use credentials in your pipeline**
+
+Your Jenkinsfile should have:
+
+```groovy
+pipeline {
+    agent any
+
+    stages {
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', 
+                    usernameVariable: 'DOCKER_USER', 
+                    passwordVariable: 'DOCKER_PASS')]) {
+
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                }
+            }
+        }
+    }
+}
+```
+
+---
+
+# 💡 **Common Mistakes (Check These!)**
+
+| Issue                                 | Fix                                                   |
+| ------------------------------------- | ----------------------------------------------------- |
+| Credential ID is wrong                | Must match exactly: **dockerhub-creds**               |
+| Wrong credential type                 | Use **Username + Password**                           |
+| Jenkins doesn't have Docker installed | Install Docker + add jenkins user to docker group     |
+| No permission to run Docker           | Run this: `sudo usermod -aG docker jenkins` + restart |
+
+---
+
+# 🔧 **Restart Jenkins after fixing**
+
+```
+sudo systemctl restart jenkins
+```
+
+Then run the job again.
+
+---
+
+# 📌 If you want, send me your **complete Jenkinsfile**, and I will fix it 100%.
+
