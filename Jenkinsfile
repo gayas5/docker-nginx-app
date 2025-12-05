@@ -1,11 +1,22 @@
 pipeline {
     agent any
 
-    environment {
-        // DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
-        IMAGE_NAME = "gayas555/my_app"
-        CONTAINER_NAME = "my_app"
+    stages {
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', 
+                    usernameVariable: 'DOCKER_USER', 
+                    passwordVariable: 'DOCKER_PASS')]) {
+
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                }
+            }
+        }
     }
+        environment {
+            IMAGE_NAME = "mohdgayas/my_app"
+            CONTAINER_NAME = "my_app"
+        }
 
     stages {
 
